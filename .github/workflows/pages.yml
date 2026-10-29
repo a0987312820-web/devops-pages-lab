@@ -57,7 +57,7 @@ jobs:
             RESPONSE=$(curl -s $TARGET_URL)
             
             # 檢查網頁內容中是否有包含你的學號 B11309052
-            if echo "$RESPONSE" | grep -q "WRONG-STUDENT-ID-999"; then
+            if echo "$RESPONSE" | grep -q "B11309052"; then
               echo "✅ Smoke test passed! Live site is up and content is verified."
             else
               echo "❌ Smoke test failed! Content not found."
