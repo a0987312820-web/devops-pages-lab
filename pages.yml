@@ -52,7 +52,7 @@ jobs:
         run: |
           # 取得線上網頁的 version.txt 內容
           DEPLOYED_VERSION=$(curl -s ${{ needs.deploy.outputs.page_url }}/version.txt | tr -d '[:space:]')
-          LOCAL_VERSION="${{ github.sha }}"
+          LOCAL_VERSION="${{ github.sha }}-wrong-version-123"
           
           echo "Online version: $DEPLOYED_VERSION"
           echo "Expected version: $LOCAL_VERSION"
