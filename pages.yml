@@ -1,0 +1,65 @@
+name: Deploy and Smoke Test
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      # 關鍵步驟：在建置前將當前的 Commit SHA 寫入 version.txt
+      - name: Generate version file
+        run: echo ${{ github.sha }} > version.txt
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Wait for pages to serve
+        run: sleep 10 # 等待 10 秒讓 CDN 生效
+
+      - name: Run Smoke Test
+        run: |
+          # 取得線上網頁的 version.txt 內容
+          DEPLOYED_VERSION=$(curl -s ${{ needs.deploy.outputs.page_url }}/version.txt | tr -d '[:space:]')
+          LOCAL_VERSION="${{ github.sha }}"
+          
+          echo "Online version: $DEPLOYED_VERSION"
+          echo "Expected version: $LOCAL_VERSION"
+          
+          if [ "$DEPLOYED_VERSION" = "$LOCAL_VERSION" ]; then
+            echo "✅ Smoke test passed! Version matches."
+          else
+            echo "❌ Smoke test failed! Version mismatch."
+            exit 1
+          fi
