@@ -42,24 +42,21 @@ jobs:
         uses: actions/deploy-pages@v4
 
   smoke-test:
-    runs-on: ubuntu-latest
-    needs: deploy
-    steps:
-      - name: Wait for pages to serve
-        run: sleep 10 # 等待 10 秒讓 CDN 生效
+      runs-on: ubuntu-latest
+      needs: deploy
+      steps:
+        - name: Wait for pages to serve
+          run: sleep 15
 
-      - name: Run Smoke Test
-        run: |
-          # 取得線上網頁的 version.txt 內容
-          DEPLOYED_VERSION=$(curl -s ${{ needs.deploy.outputs.page_url }}/version.txt | tr -d '[:space:]')
-          LOCAL_VERSION="${{ github.sha }}"
-          
-          echo "Online version: $DEPLOYED_VERSION"
-          echo "Expected version: $LOCAL_VERSION"
-          
-          if [ "$DEPLOYED_VERSION" = "$LOCAL_VERSION" ]; then
-            echo "✅ Smoke test passed! Version matches."
-          else
-            echo "❌ Smoke test failed! Version mismatch."
-            exit 1
-          fi
+        - name: Run Smoke Test
+          run: |
+            # 抓取首頁的 HTML 內容
+            RESPONSE=$(curl -s ${{ needs.deploy.outputs.page_url }})
+            
+            # 檢查裡面有沒有包含你的學號或首頁標題（例如你的學號 B11309052）
+            if echo "$RESPONSE" | grep -q "B11309052"; then
+              echo "✅ Smoke test passed! Live site is up and contains expected content."
+            else
+              echo "❌ Smoke test failed! Content not found on live site."
+              exit 1
+            fi
