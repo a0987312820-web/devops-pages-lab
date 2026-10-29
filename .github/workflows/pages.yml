@@ -17,9 +17,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
-      # 關鍵步驟：在建置前將當前的 Commit SHA 寫入 version.txt
+      # 嚴格對齊作業要求：將當前的 Commit SHA 寫入 version.txt
       - name: Generate version file
-        run: echo ${{ github.sha }} > version.txt
+        run: echo "${{ github.sha }}" > version.txt
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -42,24 +42,27 @@ jobs:
         uses: actions/deploy-pages@v4
 
   smoke-test:
-      runs-on: ubuntu-latest
-      needs: deploy
-      steps:
-        - name: Wait for pages to serve
-          run: sleep 15
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Wait for pages CDN to update
+        run: sleep 30 # 給予 GitHub Pages CDN 30秒更新快取時間
 
-        - name: Run Smoke Test
-          run: |
-            # 直接使用你的專案正式網址
-            TARGET_URL="https://a0987312820-web.github.io/devops-pages-lab/"
-            
-            echo "Checking site: $TARGET_URL"
-            RESPONSE=$(curl -s $TARGET_URL)
-            
-            # 檢查網頁內容中是否有包含你的學號 B11309052
-            if echo "$RESPONSE" | grep -q "B11309052"; then
-              echo "✅ Smoke test passed! Live site is up and content is verified."
-            else
-              echo "❌ Smoke test failed! Content not found."
-              exit 1
-            fi
+      - name: Run Strict Version Smoke Test
+        run: |
+          TARGET_URL="https://a0987312820-web.github.io/devops-pages-lab/version.txt"
+          EXPECTED_SHA="${{ github.sha }}"
+          
+          echo "Checking version from: $TARGET_URL"
+          # 抓取線上 version.txt 並用 tr 移除前後空白與換行符號
+          ONLINE_SHA=$(curl -s "$TARGET_URL" | tr -d '[:space:]')
+          
+          echo "Online version:  '$ONLINE_SHA'"
+          echo "Expected version: '$EXPECTED_SHA'"
+          
+          if [ "$ONLINE_SHA" = "$EXPECTED_SHA" ]; then
+            echo "✅ Smoke test passed! Exact version matches."
+          else
+            echo "❌ Smoke test failed! Version mismatch."
+            exit 1
+          fi
