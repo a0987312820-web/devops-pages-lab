@@ -50,13 +50,16 @@ jobs:
 
         - name: Run Smoke Test
           run: |
-            # 抓取首頁的 HTML 內容
-            RESPONSE=$(curl -s ${{ needs.deploy.outputs.page_url }})
+            # 直接使用你的專案正式網址
+            TARGET_URL="https://a0987312820-web.github.io/devops-pages-lab/"
             
-            # 檢查裡面有沒有包含你的學號或首頁標題（例如你的學號 B11309052）
+            echo "Checking site: $TARGET_URL"
+            RESPONSE=$(curl -s $TARGET_URL)
+            
+            # 檢查網頁內容中是否有包含你的學號 B11309052
             if echo "$RESPONSE" | grep -q "B11309052"; then
-              echo "✅ Smoke test passed! Live site is up and contains expected content."
+              echo "✅ Smoke test passed! Live site is up and content is verified."
             else
-              echo "❌ Smoke test failed! Content not found on live site."
+              echo "❌ Smoke test failed! Content not found."
               exit 1
             fi
