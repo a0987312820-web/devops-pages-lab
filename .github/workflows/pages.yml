@@ -51,7 +51,7 @@ jobs:
       - name: Run Strict Version Smoke Test
         run: |
           TARGET_URL="https://a0987312820-web.github.io/devops-pages-lab/version.txt"
-          EXPECTED_SHA="${{ github.sha }}"
+          EXPECTED_SHA="${{ github.sha }}-wrong-version-123"
           
           echo "Checking version from: $TARGET_URL"
           # 抓取線上 version.txt 並用 tr 移除前後空白與換行符號
